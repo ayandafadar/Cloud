@@ -232,9 +232,9 @@ describe('Unknown routes', () => {
 // ============================================================================
 describe('Release Capability Gate: v2.0.0 Requirements', () => {
   // >>> CHANGE THIS ONE THING TO TRIGGER / SWITCH <<<
-  // Set to '1.0.0' -> TEST PASSES for Blue (Baseline)
-  // Set to '2.0.0' -> TEST FAILS on Blue and AUTOMATICALLY switches cluster to Green!
-  const targetRelease = '2.0.0';
+  // Set to '1.0.0' (or default) -> TEST PASSES for Blue (Baseline)
+  // Set to '2.0.0' (or TARGET_RELEASE=2.0.0) -> TEST FAILS on Blue and AUTOMATICALLY switches cluster to Green!
+  const targetRelease = process.env.TARGET_RELEASE || '1.0.0';
 
   it(`should verify active release matches target ${targetRelease}`, async () => {
     const res = await request(app).get('/api/version');
