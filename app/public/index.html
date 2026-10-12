@@ -492,7 +492,7 @@
       <div class="metrics-bar">
         <div class="metric-item">
           <div class="val" id="instanceIdVal">----</div>
-          <div class="lbl">Pod Instance ID</div>
+          <div class="lbl">Active Pod Instance</div>
         </div>
         <div class="metric-item">
           <div class="val" id="uptimeVal">0s</div>
@@ -500,7 +500,7 @@
         </div>
         <div class="metric-item">
           <div class="val" id="requestsVal">0</div>
-          <div class="lbl">Live Hits</div>
+          <div class="lbl" id="requestsLbl">Pod Live Hits</div>
         </div>
       </div>
     </div>
@@ -622,6 +622,8 @@
 
   <script>
     let hitCount = 0;
+    let currentPodId = null;
+    let currentSlot = null;
     let pollInterval = null;
 
     function addLog(msg, type = 'info') {
@@ -638,9 +640,6 @@
 
     async function fetchLiveState() {
       try {
-        hitCount++;
-        document.getElementById('requestsVal').textContent = hitCount;
-
         const [rootRes, healthRes] = await Promise.all([
           fetch('/', { headers: { 'Accept': 'application/json' } }),
           fetch('/health', { headers: { 'Accept': 'application/json' } })
@@ -648,6 +647,25 @@
 
         const rootData = await rootRes.json();
         const healthData = await healthRes.json();
+
+        // If the pod instance changed (e.g. traffic switched to Green pod or new replica),
+        // reset the hit counter back to 1 to clearly demonstrate running on a different pod!
+        const podId = rootData.instanceId;
+        const slot = rootData.environment || (rootData.version.startsWith('2') ? 'green' : 'blue');
+
+        if (currentPodId !== podId || currentSlot !== slot) {
+          hitCount = 1;
+          if (currentPodId !== null) {
+            addLog(`🔄 Pod shifted: [${currentPodId}] -> [${podId}] (${slot.toUpperCase()} slot). Hits counter reset.`, slot);
+          }
+          currentPodId = podId;
+          currentSlot = slot;
+        } else {
+          hitCount++;
+        }
+
+        document.getElementById('requestsVal').textContent = hitCount;
+        document.getElementById('requestsLbl').textContent = `Hits (Pod: ${podId || 'live'})`;
 
         updateUiState(rootData, healthData);
       } catch (err) {

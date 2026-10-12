@@ -37,9 +37,13 @@ jobs:
 
       - name: Run tests
         run: npm test
+        env:
+          TARGET_RELEASE: '1.0.0'
 
       - name: Run tests with coverage
         run: npm run test:coverage
+        env:
+          TARGET_RELEASE: '1.0.0'
 
       - name: Upload coverage report
         if: always()
