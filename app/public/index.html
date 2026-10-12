@@ -42,7 +42,7 @@
       min-height: 100vh;
       display: flex;
       flex-direction: column;
-      transition: background-image 0.5s ease;
+      transition: background 0.6s ease, background-color 0.6s ease;
     }
 
     header {
@@ -667,6 +667,11 @@
       document.documentElement.style.setProperty('--active-accent', themeColor);
       document.documentElement.style.setProperty('--active-glow', glowColor);
 
+      // Dynamically shift background radial glows
+      document.body.style.background = isGreen
+        ? 'radial-gradient(circle at 15% 20%, rgba(16, 185, 129, 0.22) 0%, #061511 40%), radial-gradient(circle at 85% 80%, rgba(5, 150, 105, 0.15) 0%, #06110f 60%)'
+        : 'radial-gradient(circle at 15% 20%, rgba(59, 130, 246, 0.22) 0%, #0b0f19 40%), radial-gradient(circle at 85% 80%, rgba(30, 41, 59, 0.5) 0%, #070a12 60%)';
+
       // Top Status
       document.getElementById('activeSlotText').textContent = `Active: ${slotName} (v${slotVersion})`;
       document.getElementById('brandIcon').style.background = isGreen 
@@ -808,7 +813,7 @@
     window.addEventListener('DOMContentLoaded', () => {
       fetchLiveState();
       loadStudents();
-      pollInterval = setInterval(fetchLiveState, 3000);
+      pollInterval = setInterval(fetchLiveState, 800);
     });
   </script>
 </body>
