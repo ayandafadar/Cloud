@@ -1,0 +1,46 @@
+# Preview Services — allow testing Blue and Green independently
+# without affecting production traffic.
+---
+# Blue preview service
+apiVersion: v1
+kind: Service
+metadata:
+  name: blue-green-api-blue-preview
+  namespace: blue-green
+  labels:
+    app: blue-green-api
+    role: preview
+    version: blue
+    project: blue-green-deployment
+spec:
+  type: ClusterIP
+  selector:
+    app: blue-green-api
+    version: blue
+  ports:
+    - name: http
+      port: 80
+      targetPort: 3000
+      protocol: TCP
+---
+# Green preview service
+apiVersion: v1
+kind: Service
+metadata:
+  name: blue-green-api-green-preview
+  namespace: blue-green
+  labels:
+    app: blue-green-api
+    role: preview
+    version: green
+    project: blue-green-deployment
+spec:
+  type: ClusterIP
+  selector:
+    app: blue-green-api
+    version: green
+  ports:
+    - name: http
+      port: 80
+      targetPort: 3000
+      protocol: TCP

@@ -1,0 +1,290 @@
+{
+  "info": {
+    "_postman_id": "a1b2c3d4-e5f6-7a8b-9c0d-1e2f3a4b5c6d",
+    "name": "DeployShift - Blue-Green Deployment Demo API",
+    "description": "Postman API test suite for the Blue-Green Deployment college DevOps project. Tests core endpoints, CRUD operations, validation errors, and v2-specific features across Blue and Green releases.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8080",
+      "type": "string",
+      "description": "Production service endpoint (forwarded via kubectl or direct port)"
+    },
+    {
+      "key": "previewGreenUrl",
+      "value": "http://localhost:8081",
+      "type": "string",
+      "description": "Green preview service endpoint"
+    }
+  ],
+  "item": [
+    {
+      "name": "1. System & Health Probes",
+      "item": [
+        {
+          "name": "GET / (Root Info)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/",
+              "host": ["{{baseUrl}}"],
+              "path": [""]
+            },
+            "description": "Returns application name, active version, environment, instance ID, and optional release metadata (v2)."
+          }
+        },
+        {
+          "name": "GET /health (Liveness Probe)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/health",
+              "host": ["{{baseUrl}}"],
+              "path": ["health"]
+            },
+            "description": "Liveness probe endpoint returning process health, uptime, and memory usage."
+          }
+        },
+        {
+          "name": "GET /ready (Readiness Probe)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/ready",
+              "host": ["{{baseUrl}}"],
+              "path": ["ready"]
+            },
+            "description": "Readiness probe endpoint indicating whether the pod is ready to accept traffic."
+          }
+        },
+        {
+          "name": "GET /api/version (Version & Deployment Info)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/version",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "version"]
+            },
+            "description": "Returns active release version (1.0.0 vs 2.0.0), environment, instance ID, and capabilities."
+          }
+        }
+      ]
+    },
+    {
+      "name": "2. Students CRUD Operations",
+      "item": [
+        {
+          "name": "GET /api/students (List All)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/students",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "students"]
+            },
+            "description": "Returns all student records."
+          }
+        },
+        {
+          "name": "GET /api/students/:id (Get by ID)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/students/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "students", "1"]
+            },
+            "description": "Retrieves student with ID 1."
+          }
+        },
+        {
+          "name": "POST /api/students (Create Student)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Frank Miller\",\n  \"email\": \"frank@university.edu\",\n  \"course\": \"Cloud Architecture\",\n  \"year\": 2\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/students",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "students"]
+            },
+            "description": "Creates a new student record."
+          }
+        },
+        {
+          "name": "PUT /api/students/:id (Update Student)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"course\": \"Advanced Cloud Computing\",\n  \"year\": 4\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/students/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "students", "1"]
+            },
+            "description": "Updates student ID 1."
+          }
+        },
+        {
+          "name": "DELETE /api/students/:id (Delete Student)",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/students/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "students", "1"]
+            },
+            "description": "Deletes student ID 1."
+          }
+        }
+      ]
+    },
+    {
+      "name": "3. Input Validation & Error Handling",
+      "item": [
+        {
+          "name": "GET /api/students/999 (Not Found - 404)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/students/999",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "students", "999"]
+            },
+            "description": "Expects 404 Not Found for non-existent student ID."
+          }
+        },
+        {
+          "name": "POST /api/students (Missing Name - 400)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"noname@university.edu\",\n  \"course\": \"CS\",\n  \"year\": 1\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/students",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "students"]
+            },
+            "description": "Expects 400 Bad Request with validation errors."
+          }
+        },
+        {
+          "name": "POST /api/students (Invalid Email - 400)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Test User\",\n  \"email\": \"not-an-email\",\n  \"course\": \"CS\",\n  \"year\": 1\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/students",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "students"]
+            },
+            "description": "Expects 400 Bad Request with email format validation error."
+          }
+        },
+        {
+          "name": "POST /api/students (Invalid Year - 400)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Test User\",\n  \"email\": \"test@university.edu\",\n  \"course\": \"CS\",\n  \"year\": 99\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/students",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "students"]
+            },
+            "description": "Expects 400 Bad Request for year outside valid range 1-6."
+          }
+        }
+      ]
+    },
+    {
+      "name": "4. v2 (Green) Specific Features",
+      "item": [
+        {
+          "name": "GET /api/students/search?name=Alice (Search Students - v2 only)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/students/search?name=Alice",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "students", "search"],
+              "query": [
+                {
+                  "key": "name",
+                  "value": "Alice"
+                }
+              ]
+            },
+            "description": "Demonstrates genuine code differentiation in v2 (Green). In v1, this returns 404."
+          }
+        },
+        {
+          "name": "GET / (Green Release Metadata)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/",
+              "host": ["{{baseUrl}}"],
+              "path": [""]
+            },
+            "description": "When active slot is Green, response includes release metadata with codename 'emerald'."
+          }
+        }
+      ]
+    }
+  ]
+}

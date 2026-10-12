@@ -1,0 +1,26 @@
+# Production Service — routes traffic to the ACTIVE release
+# 
+# Traffic switching is performed by changing the "version" selector:
+#   version: blue   → routes to Blue pods (v1.0.0)
+#   version: green  → routes to Green pods (v2.0.0)
+#
+# Initially points to Blue (v1.0.0).
+apiVersion: v1
+kind: Service
+metadata:
+  name: blue-green-api-production
+  namespace: blue-green
+  labels:
+    app: blue-green-api
+    role: production
+    project: blue-green-deployment
+spec:
+  type: ClusterIP
+  selector:
+    app: blue-green-api
+    version: blue          # ← Change this to "green" to switch traffic
+  ports:
+    - name: http
+      port: 80
+      targetPort: 3000
+      protocol: TCP

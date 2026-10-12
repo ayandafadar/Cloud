@@ -1,0 +1,8 @@
+# Kubernetes namespace for the blue-green deployment project
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: blue-green
+  labels:
+    project: deployshift
+    managed-by: kubectl

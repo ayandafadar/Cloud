@@ -1,0 +1,11 @@
+# ConfigMap for non-sensitive application configuration
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: blue-green-config
+  namespace: blue-green
+  labels:
+    project: blue-green-deployment
+data:
+  NODE_ENV: "production"
+  PORT: "3000"

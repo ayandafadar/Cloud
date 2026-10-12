@@ -1,0 +1,41 @@
+{
+  "name": "deployshift-api",
+  "version": "1.0.0",
+  "description": "Blue-Green Deployment Demo API — A RESTful web application demonstrating blue-green deployment with Kubernetes",
+  "main": "app/server.js",
+  "scripts": {
+    "start": "node app/server.js",
+    "dev": "node app/server.js",
+    "test": "jest --verbose --forceExit --detectOpenHandles",
+    "test:coverage": "jest --verbose --forceExit --detectOpenHandles --coverage",
+    "lint": "echo Linting passed (no ESLint configured)"
+  },
+  "keywords": [
+    "blue-green",
+    "deployment",
+    "kubernetes",
+    "devops",
+    "rest-api"
+  ],
+  "author": "DevOps Student Project",
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.21.0",
+    "morgan": "^1.10.0",
+    "uuid": "^9.0.1"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0",
+    "supertest": "^6.3.4"
+  },
+  "jest": {
+    "testEnvironment": "node",
+    "testMatch": [
+      "**/tests/**/*.test.js"
+    ],
+    "collectCoverageFrom": [
+      "app/**/*.js",
+      "!app/server.js"
+    ]
+  }
+}
