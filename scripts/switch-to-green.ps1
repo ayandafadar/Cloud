@@ -53,5 +53,5 @@ Write-Host "`nProduction endpoints:" -ForegroundColor Cyan
 kubectl get endpoints blue-green-api-production -n $Namespace
 
 Write-Host "`n[DONE] Production traffic is now routed to Green (v2.0.0).`n" -ForegroundColor Green
-Write-Host "Verify with:  kubectl port-forward svc/blue-green-api-production -n $Namespace 8080:80" -ForegroundColor Yellow
-Write-Host "Then:         curl http://localhost:8080/api/version`n" -ForegroundColor Yellow
+Write-Host "If port-forward is running, refresh browser at: http://localhost:8080 (or /console)" -ForegroundColor Cyan
+Write-Host "Or re-run: kubectl port-forward svc/blue-green-api-production -n $Namespace 8080:80`n" -ForegroundColor Yellow
