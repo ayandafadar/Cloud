@@ -1,0 +1,733 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DeployShift — Blue-Green Deployment Console</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0b0f19;
+      --card-bg: rgba(18, 24, 38, 0.85);
+      --card-border: rgba(255, 255, 255, 0.08);
+      --text-main: #f3f4f6;
+      --text-muted: #9ca3af;
+      --blue-accent: #3b82f6;
+      --blue-glow: rgba(59, 130, 246, 0.35);
+      --green-accent: #10b981;
+      --green-glow: rgba(16, 185, 129, 0.35);
+      --warning: #f59e0b;
+      --danger: #ef4444;
+      --font-sans: 'Outfit', -apple-system, sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+      --active-accent: var(--blue-accent);
+      --active-glow: var(--blue-glow);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: var(--bg);
+      background-image: 
+        radial-gradient(circle at 15% 20%, var(--active-glow) 0%, transparent 40%),
+        radial-gradient(circle at 85% 80%, rgba(30, 41, 59, 0.5) 0%, transparent 50%);
+      color: var(--text-main);
+      font-family: var(--font-sans);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      transition: background-image 0.5s ease;
+    }
+
+    header {
+      padding: 1.5rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid var(--card-border);
+      backdrop-filter: blur(12px);
+      background: rgba(11, 15, 25, 0.7);
+      position: sticky;
+      top: 0;
+      z-index: 50;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 0.85rem;
+    }
+
+    .brand-icon {
+      width: 38px;
+      height: 38px;
+      border-radius: 10px;
+      background: linear-gradient(135deg, var(--active-accent), #6366f1);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 1.2rem;
+      box-shadow: 0 0 15px var(--active-glow);
+      transition: all 0.4s ease;
+    }
+
+    .brand h1 {
+      font-size: 1.35rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+    }
+
+    .brand p {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+
+    .header-status {
+      display: flex;
+      align-items: center;
+      gap: 1.5rem;
+    }
+
+    .pulse-badge {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.4rem 0.9rem;
+      border-radius: 9999px;
+      font-size: 0.85rem;
+      font-weight: 500;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--card-border);
+    }
+
+    .dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background-color: var(--active-accent);
+      box-shadow: 0 0 10px var(--active-accent);
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.5; transform: scale(0.85); }
+    }
+
+    main {
+      flex: 1;
+      max-width: 1300px;
+      width: 100%;
+      margin: 0 auto;
+      padding: 2rem;
+      display: flex;
+      flex-direction: column;
+      gap: 2rem;
+    }
+
+    .grid-2 {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+      gap: 1.5rem;
+    }
+
+    .grid-3 {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 1.25rem;
+    }
+
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 16px;
+      padding: 1.5rem;
+      backdrop-filter: blur(16px);
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
+      position: relative;
+      overflow: hidden;
+      transition: transform 0.2s ease, border-color 0.3s ease;
+    }
+
+    .card:hover {
+      border-color: rgba(255, 255, 255, 0.16);
+    }
+
+    .card-title {
+      font-size: 0.95rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--text-muted);
+      margin-bottom: 1.2rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    /* Live Slot Banner */
+    .slot-banner {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 2rem;
+      border-radius: 20px;
+      background: linear-gradient(135deg, rgba(18, 24, 38, 0.95), rgba(15, 23, 42, 0.85));
+      border: 2px solid var(--active-accent);
+      box-shadow: 0 0 30px var(--active-glow);
+      position: relative;
+    }
+
+    .slot-info h2 {
+      font-size: 2.2rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .slot-tag {
+      font-size: 0.85rem;
+      padding: 0.25rem 0.8rem;
+      border-radius: 6px;
+      font-weight: 600;
+      text-transform: uppercase;
+      background: var(--active-accent);
+      color: #fff;
+    }
+
+    .slot-info p {
+      color: var(--text-muted);
+      margin-top: 0.5rem;
+      font-size: 1.05rem;
+    }
+
+    .metrics-bar {
+      display: flex;
+      gap: 2rem;
+      text-align: right;
+    }
+
+    .metric-item .val {
+      font-size: 1.6rem;
+      font-weight: 700;
+      font-family: var(--font-mono);
+      color: #fff;
+    }
+
+    .metric-item .lbl {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    /* Slot comparison card */
+    .slot-card {
+      position: relative;
+      border-left: 4px solid var(--text-muted);
+    }
+
+    .slot-card.is-active {
+      border-left-color: var(--active-accent);
+      background: linear-gradient(90deg, rgba(59, 130, 246, 0.08), transparent);
+    }
+
+    .slot-card.green.is-active {
+      background: linear-gradient(90deg, rgba(16, 185, 129, 0.08), transparent);
+      border-left-color: var(--green-accent);
+    }
+
+    .slot-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1rem;
+    }
+
+    .badge-status {
+      padding: 0.25rem 0.6rem;
+      border-radius: 9999px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+
+    .badge-live {
+      background: rgba(16, 185, 129, 0.2);
+      color: #34d399;
+      border: 1px solid rgba(16, 185, 129, 0.3);
+    }
+
+    .badge-idle {
+      background: rgba(156, 163, 175, 0.15);
+      color: #9ca3af;
+      border: 1px solid rgba(156, 163, 175, 0.2);
+    }
+
+    .features-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      margin-top: 1rem;
+    }
+
+    .features-list li {
+      font-size: 0.9rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      color: #d1d5db;
+    }
+
+    .check-icon {
+      color: var(--green-accent);
+      font-weight: 700;
+    }
+
+    .cross-icon {
+      color: var(--danger);
+      font-weight: 700;
+    }
+
+    /* Live Data Feed Table */
+    .data-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.9rem;
+      margin-top: 0.5rem;
+    }
+
+    .data-table th {
+      text-align: left;
+      padding: 0.75rem 1rem;
+      color: var(--text-muted);
+      border-bottom: 1px solid var(--card-border);
+      font-weight: 500;
+    }
+
+    .data-table td {
+      padding: 0.75rem 1rem;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+    }
+
+    .mono {
+      font-family: var(--font-mono);
+      font-size: 0.85rem;
+    }
+
+    /* Search Sandbox */
+    .search-box {
+      display: flex;
+      gap: 0.75rem;
+      margin-bottom: 1rem;
+    }
+
+    .search-input {
+      flex: 1;
+      background: rgba(0, 0, 0, 0.25);
+      border: 1px solid var(--card-border);
+      color: #fff;
+      padding: 0.65rem 1rem;
+      border-radius: 8px;
+      font-family: var(--font-sans);
+      font-size: 0.9rem;
+    }
+
+    .search-input:focus {
+      outline: none;
+      border-color: var(--active-accent);
+    }
+
+    .btn {
+      background: var(--active-accent);
+      color: #fff;
+      border: none;
+      padding: 0.65rem 1.25rem;
+      border-radius: 8px;
+      font-weight: 600;
+      font-size: 0.9rem;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      transition: all 0.2s;
+    }
+
+    .btn:hover {
+      opacity: 0.9;
+      transform: translateY(-1px);
+    }
+
+    .btn:active {
+      transform: translateY(0);
+    }
+
+    .btn-secondary {
+      background: rgba(255, 255, 255, 0.08);
+      color: #d1d5db;
+      border: 1px solid var(--card-border);
+    }
+
+    .btn-secondary:hover {
+      background: rgba(255, 255, 255, 0.15);
+      color: #fff;
+    }
+
+    /* Console / Logs View */
+    .log-stream {
+      background: #060911;
+      border: 1px solid var(--card-border);
+      border-radius: 10px;
+      padding: 1rem;
+      font-family: var(--font-mono);
+      font-size: 0.8rem;
+      max-height: 180px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+    }
+
+    .log-entry {
+      color: #94a3b8;
+      line-height: 1.4;
+    }
+
+    .log-entry.active-hit {
+      color: #60a5fa;
+    }
+
+    .log-entry.green-hit {
+      color: #34d399;
+    }
+
+    footer {
+      border-top: 1px solid var(--card-border);
+      padding: 1.25rem 2rem;
+      text-align: center;
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      background: rgba(11, 15, 25, 0.6);
+    }
+
+    @media (max-width: 768px) {
+      .slot-banner {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1.5rem;
+      }
+      .metrics-bar {
+        text-align: left;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="brand">
+      <div class="brand-icon" id="brandIcon">DS</div>
+      <div>
+        <h1>DeployShift</h1>
+        <p>Blue-Green Kubernetes Live Console</p>
+      </div>
+    </div>
+    <div class="header-status">
+      <div class="pulse-badge">
+        <div class="dot" id="liveDot"></div>
+        <span id="activeSlotText">Active: Detecting...</span>
+      </div>
+      <button class="btn btn-secondary" onclick="fetchLiveState()" style="font-size: 0.8rem; padding: 0.4rem 0.8rem;">
+        Refresh
+      </button>
+    </div>
+  </header>
+
+  <main>
+    <!-- Master Slot Status Banner -->
+    <div class="slot-banner" id="slotBanner">
+      <div class="slot-info">
+        <h2 id="slotHeading">
+          <span id="slotName">Loading Slot...</span>
+          <span class="slot-tag" id="slotTag">v0.0.0</span>
+        </h2>
+        <p id="slotDescription">Establishing connection to cluster service...</p>
+      </div>
+      <div class="metrics-bar">
+        <div class="metric-item">
+          <div class="val" id="instanceIdVal">----</div>
+          <div class="lbl">Pod Instance ID</div>
+        </div>
+        <div class="metric-item">
+          <div class="val" id="uptimeVal">0s</div>
+          <div class="lbl">Process Uptime</div>
+        </div>
+        <div class="metric-item">
+          <div class="val" id="requestsVal">0</div>
+          <div class="lbl">Live Hits</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 2-Column: Blue vs Green Side-by-Side Status -->
+    <div class="grid-2">
+      <!-- Blue v1.0.0 Card -->
+      <div class="card slot-card" id="blueCard">
+        <div class="slot-header">
+          <div>
+            <h3>Blue Environment (v1.0.0)</h3>
+            <span class="mono" style="color: var(--text-muted); font-size: 0.8rem;">Production Baseline Release</span>
+          </div>
+          <span class="badge-status badge-idle" id="blueBadge">Idle / Standby</span>
+        </div>
+        <p style="font-size: 0.9rem; color: var(--text-muted);">
+          Core REST API with health probes and complete student CRUD functionality.
+        </p>
+        <ul class="features-list">
+          <li><span class="check-icon">&#10003;</span> In-memory student records</li>
+          <li><span class="check-icon">&#10003;</span> Structured JSON logging with request UUIDs</li>
+          <li><span class="check-icon">&#10003;</span> Kubernetes Liveness & Readiness checks</li>
+          <li><span class="cross-icon">&#10005;</span> Student search capability (v2 only)</li>
+          <li><span class="cross-icon">&#10005;</span> Deployment slot metadata (v2 only)</li>
+        </ul>
+      </div>
+
+      <!-- Green v2.0.0 Card -->
+      <div class="card slot-card green" id="greenCard">
+        <div class="slot-header">
+          <div>
+            <h3>Green Environment (v2.0.0)</h3>
+            <span class="mono" style="color: var(--text-muted); font-size: 0.8rem;">New Enhanced Release</span>
+          </div>
+          <span class="badge-status badge-idle" id="greenBadge">Idle / Standby</span>
+        </div>
+        <p style="font-size: 0.9rem; color: var(--text-muted);">
+          Upgraded version adding advanced search, release metadata, and deployment slot introspection.
+        </p>
+        <ul class="features-list">
+          <li><span class="check-icon">&#10003;</span> All baseline CRUD capabilities</li>
+          <li><span class="check-icon">&#10003;</span> Release codename metadata (<code class="mono">emerald</code>)</li>
+          <li><span class="check-icon">&#10003;</span> Active deployment slot tracking</li>
+          <li><span class="check-icon" id="searchCheckIcon">&#10003;</span> <strong style="color: #6ee7b7;">GET /api/students/search</strong> endpoint</li>
+          <li><span class="check-icon">&#10003;</span> Zero-downtime cutover validated</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Student Search Demo (Demonstrates v1 vs v2 behavior interactively) -->
+    <div class="card">
+      <div class="card-title">
+        <span>Interactive Feature Test: Student Search</span>
+        <span class="mono" style="font-size: 0.8rem;" id="searchEndpointBadge">GET /api/students/search</span>
+      </div>
+      <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1rem;">
+        In <strong>Blue (v1.0.0)</strong>, this search endpoint returns <span style="color: var(--danger); font-weight: 600;">404 Not Found</span>. In <strong>Green (v2.0.0)</strong>, it performs live query filtering. Try searching for names like "Alice" or "Bob".
+      </p>
+      <div class="search-box">
+        <input type="text" class="search-input" id="searchQuery" placeholder="Enter student name (e.g. Alice, Bob)..." value="Alice">
+        <button class="btn" onclick="testSearch()">Execute Query</button>
+      </div>
+      <div id="searchResult" style="background: rgba(0,0,0,0.2); padding: 0.85rem 1rem; border-radius: 8px; font-family: var(--font-mono); font-size: 0.85rem; border: 1px solid var(--card-border);">
+        Click 'Execute Query' to test endpoint on currently active release.
+      </div>
+    </div>
+
+    <!-- Active Students Directory -->
+    <div class="card">
+      <div class="card-title">
+        <span>Live Students Directory (<code class="mono">/api/students</code>)</span>
+        <button class="btn btn-secondary" onclick="loadStudents()" style="font-size: 0.8rem; padding: 0.35rem 0.75rem;">Reload</button>
+      </div>
+      <div style="overflow-x: auto;">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Student Name</th>
+              <th>Email</th>
+              <th>Course</th>
+              <th>Year</th>
+            </tr>
+          </thead>
+          <tbody id="studentsBody">
+            <tr><td colspan="5" style="text-align: center; color: var(--text-muted);">Loading students...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Live Requests Log -->
+    <div class="card">
+      <div class="card-title">
+        <span>Live Service Traffic Stream</span>
+        <span class="mono" style="font-size: 0.8rem; color: var(--text-muted);">Auto-polling every 3s</span>
+      </div>
+      <div class="log-stream" id="logStream">
+        <div class="log-entry">Console initialized. Awaiting cluster requests...</div>
+      </div>
+    </div>
+  </main>
+
+  <footer>
+    DeployShift — Blue-Green Deployment of a RESTful Web Application Using Kubernetes & Automated CI/CD
+  </footer>
+
+  <script>
+    let hitCount = 0;
+    let pollInterval = null;
+
+    function addLog(msg, type = 'info') {
+      const stream = document.getElementById('logStream');
+      const time = new Date().toLocaleTimeString();
+      const div = document.createElement('div');
+      div.className = 'log-entry ' + (type === 'blue' ? 'active-hit' : type === 'green' ? 'green-hit' : '');
+      div.textContent = `[${time}] ${msg}`;
+      stream.prepend(div);
+      while (stream.children.length > 25) {
+        stream.removeChild(stream.lastChild);
+      }
+    }
+
+    async function fetchLiveState() {
+      try {
+        hitCount++;
+        document.getElementById('requestsVal').textContent = hitCount;
+
+        const [rootRes, healthRes] = await Promise.all([
+          fetch('/', { headers: { 'Accept': 'application/json' } }),
+          fetch('/health', { headers: { 'Accept': 'application/json' } })
+        ]);
+
+        const rootData = await rootRes.json();
+        const healthData = await healthRes.json();
+
+        updateUiState(rootData, healthData);
+      } catch (err) {
+        console.error('Failed to poll active service state:', err);
+        addLog(`Connection error: ${err.message}`);
+      }
+    }
+
+    function updateUiState(root, health) {
+      const isGreen = root.version.startsWith('2') || root.environment === 'green';
+      const slotName = isGreen ? 'Green Release' : 'Blue Release';
+      const slotVersion = root.version;
+      const themeColor = isGreen ? '#10b981' : '#3b82f6';
+      const glowColor = isGreen ? 'rgba(16, 185, 129, 0.35)' : 'rgba(59, 130, 246, 0.35)';
+
+      // Update CSS Variables dynamically
+      document.documentElement.style.setProperty('--active-accent', themeColor);
+      document.documentElement.style.setProperty('--active-glow', glowColor);
+
+      // Top Status
+      document.getElementById('activeSlotText').textContent = `Active: ${slotName} (v${slotVersion})`;
+      document.getElementById('brandIcon').style.background = isGreen 
+        ? 'linear-gradient(135deg, #10b981, #059669)'
+        : 'linear-gradient(135deg, #3b82f6, #6366f1)';
+
+      // Main Banner
+      document.getElementById('slotName').textContent = slotName;
+      document.getElementById('slotTag').textContent = `v${slotVersion}`;
+      document.getElementById('slotTag').style.backgroundColor = themeColor;
+      document.getElementById('slotHeading').style.color = themeColor;
+      document.getElementById('slotDescription').textContent = isGreen
+        ? 'Green is actively serving live production traffic with advanced features enabled.'
+        : 'Blue is actively serving live production traffic as the baseline release.';
+
+      // Metrics
+      document.getElementById('instanceIdVal').textContent = root.instanceId || '----';
+      document.getElementById('uptimeVal').textContent = `${Math.round(health.uptime || 0)}s`;
+
+      // Cards State
+      const blueCard = document.getElementById('blueCard');
+      const greenCard = document.getElementById('greenCard');
+      const blueBadge = document.getElementById('blueBadge');
+      const greenBadge = document.getElementById('greenBadge');
+
+      if (isGreen) {
+        blueCard.classList.remove('is-active');
+        blueBadge.className = 'badge-status badge-idle';
+        blueBadge.textContent = 'Standby (Warm)';
+
+        greenCard.classList.add('is-active');
+        greenBadge.className = 'badge-status badge-live';
+        greenBadge.textContent = 'Active (Live)';
+        addLog(`Routed to Green Pod [${root.instanceId}] — v${root.version}`, 'green');
+      } else {
+        greenCard.classList.remove('is-active');
+        greenBadge.className = 'badge-status badge-idle';
+        greenBadge.textContent = 'Standby (Warm)';
+
+        blueCard.classList.add('is-active');
+        blueBadge.className = 'badge-status badge-live';
+        blueBadge.textContent = 'Active (Live)';
+        addLog(`Routed to Blue Pod [${root.instanceId}] — v${root.version}`, 'blue');
+      }
+    }
+
+    async function testSearch() {
+      const q = document.getElementById('searchQuery').value.trim();
+      const resBox = document.getElementById('searchResult');
+      resBox.innerHTML = '<span style="color: #9ca3af;">Querying /api/students/search?name=' + encodeURIComponent(q) + '...</span>';
+      
+      try {
+        const res = await fetch(`/api/students/search?name=${encodeURIComponent(q)}`);
+        const data = await res.json();
+        
+        if (res.status === 200) {
+          resBox.innerHTML = `
+            <div style="color: #34d399; font-weight: 600; margin-bottom: 0.35rem;">&#10003; 200 OK (v2.0.0 Green Feature Active)</div>
+            <pre style="white-space: pre-wrap; font-size: 0.8rem; color: #e2e8f0;">${JSON.stringify(data, null, 2)}</pre>
+          `;
+          addLog(`Search executed for "${q}": found ${data.count} student(s)`, 'green');
+        } else {
+          resBox.innerHTML = `
+            <div style="color: #ef4444; font-weight: 600; margin-bottom: 0.35rem;">&#10005; ${res.status} ${data.error || 'Not Available'}</div>
+            <p style="color: #94a3b8; font-size: 0.8rem;">Endpoint is not supported in the active Blue (v1.0.0) release. Switch traffic to Green to enable search!</p>
+          `;
+          addLog(`Search rejected (404) on Blue v1.0.0 release`, 'blue');
+        }
+      } catch (err) {
+        resBox.innerHTML = `<span style="color: #ef4444;">Error: ${err.message}</span>`;
+      }
+    }
+
+    async function loadStudents() {
+      const tbody = document.getElementById('studentsBody');
+      try {
+        const res = await fetch('/api/students');
+        const students = await res.json();
+        tbody.innerHTML = '';
+        students.forEach(s => {
+          const tr = document.createElement('tr');
+          tr.innerHTML = `
+            <td class="mono">${s.id}</td>
+            <td style="font-weight: 600;">${s.name}</td>
+            <td class="mono" style="color: #93c5fd;">${s.email}</td>
+            <td>${s.course}</td>
+            <td><span class="slot-tag" style="padding: 2px 8px; font-size: 0.75rem; background: rgba(255,255,255,0.1);">Yr ${s.year}</span></td>
+          `;
+          tbody.appendChild(tr);
+        });
+      } catch (err) {
+        tbody.innerHTML = `<tr><td colspan="5" style="color: #ef4444; text-align: center;">Failed to load students: ${err.message}</td></tr>`;
+      }
+    }
+
+    // Initialize
+    window.addEventListener('DOMContentLoaded', () => {
+      fetchLiveState();
+      loadStudents();
+      pollInterval = setInterval(fetchLiveState, 3000);
+    });
+  </script>
+</body>
+</html>

@@ -27,6 +27,13 @@ describe('GET /', () => {
     expect(res.body.status).toBe('running');
     expect(res.body.instanceId).toBeDefined();
   });
+
+  it('should return visual console on GET /console', async () => {
+    const res = await request(app).get('/console');
+    expect(res.status).toBe(200);
+    expect(res.text).toContain('DeployShift');
+    expect(res.text).toContain('Blue-Green Kubernetes Live Console');
+  });
 });
 
 // ============================================================================

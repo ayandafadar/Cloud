@@ -15,6 +15,7 @@
  *       and is NOT suitable for production persistence.
  */
 
+const path = require('path');
 const express = require('express');
 const morgan = require('morgan');
 const { v4: uuidv4 } = require('uuid');
@@ -73,9 +74,14 @@ app.use(morgan((tokens, req, res) => {
 
 /**
  * GET /
- * Returns application name, version, environment, and status.
+ * Returns interactive GUI console for browser visits, or
+ * application JSON metadata for automated API calls and probes.
  */
 app.get('/', (req, res) => {
+  if (req.accepts('html') && !req.accepts('json') || (req.headers.accept && req.headers.accept.includes('text/html') && !req.xhr)) {
+    return res.sendFile(path.join(__dirname, 'public', 'index.html'));
+  }
+
   const body = {
     application: 'DeployShift — Blue-Green Deployment Demo API',
     version: APP_VERSION,
@@ -96,6 +102,14 @@ app.get('/', (req, res) => {
   }
 
   res.json(body);
+});
+
+/**
+ * GET /console
+ * Direct route to always load the visual Blue-Green dashboard
+ */
+app.get('/console', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
 /**
