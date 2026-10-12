@@ -1,6 +1,6 @@
 # DeployShift: Blue-Green Deployment of a RESTful Web Application Using Kubernetes and Automated CI/CD
 
-[![CI Pipeline](https://github.com/ayand/Cloud/actions/workflows/ci.yml/badge.svg)](https://github.com/ayand/Cloud/actions/workflows/ci.yml)
+[![CI Pipeline](https://github.com/ayandafadar/DeployShift/actions/workflows/ci.yml/badge.svg)](https://github.com/ayandafadar/DeployShift/actions/workflows/ci.yml)
 [![Node.js](https://img.shields.io/badge/Node.js-v20-339933?logo=node.js)](https://nodejs.org/)
 [![Docker](https://img.shields.io/badge/Docker-Multi--Stage-2496ED?logo=docker)](https://www.docker.com/)
 [![Kubernetes](https://img.shields.io/badge/Kubernetes-v1.36-326CE5?logo=kubernetes)](https://kubernetes.io/)
@@ -177,7 +177,7 @@ sequenceDiagram
 ## 8. Project Directory Structure
 
 ```text
-Cloud/
+Cloud/ (DeployShift/)
 ├── .github/
 │   └── workflows/
 │       └── ci.yml               # Automated CI pipeline (lint, test, build, smoke)
@@ -258,7 +258,7 @@ All prerequisites passed!
 
 1. Clone or open the project directory in PowerShell:
    ```powershell
-   cd c:\Users\ayand\Desktop\Projects\Cloud
+   cd DeployShift
    ```
 2. Ensure Execution Policy permits local scripts:
    ```powershell
