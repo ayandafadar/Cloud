@@ -226,3 +226,23 @@ describe('Unknown routes', () => {
     expect(res.body.error).toBe('Not Found');
   });
 });
+
+// ============================================================================
+// Release Capability Gate (Test-Driven Blue-Green Deployment)
+// ============================================================================
+describe('Release Capability Gate: v2.0.0 Requirements', () => {
+  // >>> CHANGE THIS ONE THING TO TRIGGER / SWITCH <<<
+  // Set to '1.0.0' -> TEST PASSES for Blue (Baseline)
+  // Set to '2.0.0' -> TEST FAILS on Blue! (Requires Green deploy)
+  const targetRelease = '2.0.0';
+
+  it(`should verify active release matches target ${targetRelease}`, async () => {
+    const res = await request(app).get('/api/version');
+    expect(res.status).toBe(200);
+    expect(res.body.version).toBe(targetRelease);
+
+    if (targetRelease === '2.0.0') {
+      expect(res.body.capabilities).toContain('search');
+    }
+  });
+});
