@@ -233,16 +233,39 @@ describe('Unknown routes', () => {
 describe('Release Capability Gate: v2.0.0 Requirements', () => {
   // >>> CHANGE THIS ONE THING TO TRIGGER / SWITCH <<<
   // Set to '1.0.0' -> TEST PASSES for Blue (Baseline)
-  // Set to '2.0.0' -> TEST FAILS on Blue! (Requires Green deploy)
+  // Set to '2.0.0' -> TEST FAILS on Blue and AUTOMATICALLY switches cluster to Green!
   const targetRelease = '2.0.0';
 
   it(`should verify active release matches target ${targetRelease}`, async () => {
     const res = await request(app).get('/api/version');
     expect(res.status).toBe(200);
-    expect(res.body.version).toBe(targetRelease);
 
-    if (targetRelease === '2.0.0') {
-      expect(res.body.capabilities).toContain('search');
+    try {
+      expect(res.body.version).toBe(targetRelease);
+      if (targetRelease === '2.0.0') {
+        expect(res.body.capabilities).toContain('search');
+      }
+    } catch (testError) {
+      if (targetRelease === '2.0.0' && res.body.version !== '2.0.0') {
+        const { execSync } = require('child_process');
+        const path = require('path');
+        const rootDir = path.resolve(__dirname, '../../');
+
+        console.log('\n\x1b[33m%s\x1b[0m', '⚡ [AUTOMATION TRIGGER] Release test gate failed on Blue!');
+        console.log('\x1b[36m%s\x1b[0m', '🚀 Automatically deploying and switching production traffic to Green in Kubernetes...\n');
+
+        try {
+          execSync('kubectl set selector service blue-green-api-production -n blue-green "app=blue-green-api,version=green"', {
+            cwd: rootDir,
+            stdio: 'inherit'
+          });
+          console.log('\x1b[32m%s\x1b[0m', '\n✅ [SUCCESS] Production traffic automatically switched to Green (v2.0.0)!');
+        } catch (k8sErr) {
+          console.error('Kubernetes auto-switch failed:', k8sErr.message);
+        }
+      }
+      // Re-throw so the test runner still shows the failure that triggered the deployment
+      throw testError;
     }
   });
 });
